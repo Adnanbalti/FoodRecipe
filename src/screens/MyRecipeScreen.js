@@ -22,26 +22,60 @@ import {
   
     useEffect(() => {
       const fetchrecipes = async () => {
-        
-        };
-  
+  try {
+    const storedRecipes = await AsyncStorage.getItem("customrecipes");
+
+    if (storedRecipes !== null) {
+      const parsedRecipes = JSON.parse(storedRecipes);
+      setrecipes(parsedRecipes);
+    } else {
+      setrecipes([]); // no recipes found, set to empty array
+    }
+  } catch (error) {
+    console.error("Failed to load recipes:", error);
+  } finally {
+    setLoading(false); // hide the loader in all cases
+  }
+};
+
       fetchrecipes();
     }, []);
   
     const handleAddrecipe = () => {
-
+        navigation.navigate("RecipesFormScreen");
     };
+
   
     const handlerecipeClick = (recipe) => {
-
+        navigation.navigate("CustomRecipesScreen", { recipe });
     };
+
     const deleterecipe = async (index) => {
-    
-    };
-  
-    const editrecipe = (recipe, index) => {
+  try {
+    // Clone the existing recipes array
+    const updatedrecipes = [...recipes];
 
-    };
+    // Remove the recipe at the specified index
+    updatedrecipes.splice(index, 1);
+
+    // Save the updated array back to AsyncStorage
+    await AsyncStorage.setItem("customrecipes", JSON.stringify(updatedrecipes));
+
+    // Update the component state
+    setrecipes(updatedrecipes);
+  } catch (error) {
+    console.error("Error deleting recipe:", error);
+  }
+};
+
+  
+const editrecipe = (recipe, index) => {
+    navigation.navigate("RecipesFormScreen", {
+      recipeToEdit: recipe,
+      recipeIndex: index,
+    });
+  };
+  
   
     return (
       <View style={styles.container}>
@@ -67,15 +101,34 @@ import {
                   
                     <Text style={styles.recipeTitle}>{recipe.title}</Text>
                     <Text style={styles.recipeDescription} testID="recipeDescp">
-                  
+                        {recipe.description
+                        ? recipe.description.length > 50
+                        ? `${recipe.description.substring(0, 50)}...`
+                        : recipe.description
+                        : "No description available."}
                     </Text>
+
                   </TouchableOpacity>
   
                   {/* Edit and Delete Buttons */}
                   <View style={styles.actionButtonsContainer} testID="editDeleteButtons">
-                    
-                
-                  </View>
+  <TouchableOpacity
+    style={styles.editButton}
+    onPress={() => editrecipe(recipe, index)}
+    testID="editButton"
+  >
+    <Text style={styles.buttonText}>Edit</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    style={styles.deleteButton}
+    onPress={() => deleterecipe(index)}
+    testID="deleteButton"
+  >
+    <Text style={styles.deleteButtonText}>Delete</Text>
+  </TouchableOpacity>
+</View>
+
                 </View>
               ))
             )}
